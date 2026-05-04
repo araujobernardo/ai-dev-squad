@@ -2,30 +2,36 @@
 
 A Story is **done** when ALL of the following are true.
 
-## Code Quality
-- All acceptance criteria are met and verifiable
-- No debug or diagnostic statements left in source code
-- Code follows existing patterns in the codebase
-- No obviously duplicated logic introduced
+## Acceptance Criteria
+
+- All acceptance criteria in the issue are met.
+
+## CI Checks
+
+- All CI checks are green (`gh pr checks --watch` exits 0).
+- No new ESLint errors introduced.
+- `tsc --noEmit` passes with no new TypeScript errors.
 
 ## Testing
-- Automated tests written for all new utility functions and logic
-- Automated tests written for all new UI components
-- All existing tests still passing (no regressions)
-- Edge cases and error paths tested
-- For UI stories: manual tests completed and results documented
 
-## Review
-- PR opened with title including Jira ticket key (e.g. [PROJECT_KEY]-16)
-- PR description includes what was built and how to test manually
-- QA agent review completed and posted as a PR comment
-- No open bugs linked to the story
+- Every new function has at least one automated test.
+- All existing tests still pass (no regressions).
 
-## Jira
-- Ticket moved to Done
-- Final comment added confirming merge
+## Pull Request
+
+- PR description includes a constitution check section.
+- PR is squash merged and the feature branch is deleted.
+
+## Issue
+
+- Issue closed with a comment: "Merged in PR #X. Story complete."
+
+## Changelog
+
+- One line appended to `CHANGELOG.md` in the format:
+  `- **YYYY-MM-DD** | #<issue> | <story title> | <one sentence summary>`
 
 ---
-*This document is the single source of truth for story completion.
-All agents must verify work meets this standard before recommending
-approval.*
+
+_This document is the single source of truth for story completion.
+All agents must verify work meets this standard before closing a story._

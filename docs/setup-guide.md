@@ -1,20 +1,17 @@
 # Setup Guide
 
-This guide walks you through configuring the AI Dev Squad for your project.
+This guide walks you through bootstrapping the AI Dev Squad in a new project.
 
 ## Prerequisites
-
-Before you begin, make sure you have the following installed and ready:
 
 | Prerequisite | Notes |
 |---|---|
 | [Claude Code](https://claude.ai/code) | The CLI that powers all agents |
-| [Node.js](https://nodejs.org) v18 or later | Required to run the setup scripts |
-| [GitHub CLI](https://cli.github.com) (`gh`) | Required for PR creation and merging |
-| A GitHub account and repo | The repo this squad will work in |
-| A Jira account | Free tier at [atlassian.com](https://www.atlassian.com/software/jira) is sufficient |
+| [Node.js](https://nodejs.org) v18 or later | Required for skills installation |
+| [GitHub CLI](https://cli.github.com) (`gh`) | Required for PR creation, merging, and issue management |
+| A GitHub repo with Issues enabled | The repo this squad will work in |
 
-### GitHub CLI — verify it works
+### Verify GitHub CLI is authenticated
 
 ```bash
 gh auth status
@@ -22,24 +19,27 @@ gh auth status
 
 If not authenticated, run `gh auth login` first.
 
-### Jira API token
-
-1. Log in to Jira and go to **Account Settings → Security → API tokens**
-2. Click **Create API token**, give it a name, and copy the value
-3. You will need this during setup — keep it ready
-
 ---
 
-## Step 1 — Clone the template
+## Step 1 — Copy the template into your project
 
 ```bash
-git clone https://github.com/[YOUR_GITHUB_USERNAME]/ai-dev-squad my-project
-cd my-project
+# Clone this repo (or download as a ZIP)
+git clone https://github.com/araujobernardo/ai-dev-squad.git
+cd ai-dev-squad
+
+# Copy the squad files into your project
+cp -r .claude/ /path/to/your/project/
+cp constitution.md /path/to/your/project/
+cp -r docs/ /path/to/your/project/
+cp CLAUDE.md /path/to/your/project/
 ```
 
-Remove the template's git history and start fresh:
+Or, if starting a brand new project from scratch:
 
 ```bash
+git clone https://github.com/araujobernardo/ai-dev-squad.git my-project
+cd my-project
 rm -rf .git
 git init
 git add .
@@ -48,115 +48,102 @@ git commit -m "chore: initialise project from ai-dev-squad template"
 
 ---
 
-## Step 2 — Run the setup wizard
+## Step 2 — Replace placeholders
+
+Find and replace the following placeholders throughout all files:
+
+| Placeholder | Replace with |
+|---|---|
+| `[PROJECT_NAME]` | Your project name, e.g. `Finance Analyser` |
+| `[TICKET_PREFIX]` | Your issue prefix, e.g. `FA`, `MYAPP` |
+| `[DATE]` | Today's date in `YYYY-MM-DD` format (in `constitution.md`) |
+
+Quick replace on macOS/Linux:
 
 ```bash
-node scripts/setup.mjs
+find . -not -path './.git/*' -type f -name '*.md' \
+  -exec sed -i '' 's/\[PROJECT_NAME\]/Finance Analyser/g' {} \;
 ```
-
-The wizard will ask for:
-- **Project name** — used to personalise `CLAUDE.md`
-- **Jira base URL** — e.g. `https://mycompany.atlassian.net`
-- **Jira email** — the email address on your Jira account
-- **Jira API token** — the token you created above
-- **Jira project key** — e.g. `FA`, `MYAPP`
-- **GitHub repo URL** — e.g. `https://github.com/you/my-project`
-
-On success it will print:
-```
-Connection successful - logged in as: Your Name
-=== Setup complete! ===
-```
-
-This creates a `.env` file at the project root. It is already listed in
-`.gitignore` — never commit it.
 
 ---
 
-## Step 3 — Add your requirements
+## Step 3 — Install skills
 
-Create `docs/requirements.md` and write out what you want to build.
-There is no fixed format — plain prose, bullet points, or user stories
-all work. The Product Owner agent will read this and structure it into
-Epics and Stories.
+The squad uses two Claude Code skills. Install them from your project root:
+
+```bash
+npx skills add speckit
+npx skills add impeccable
+```
+
+`speckit` powers the `/speckit-specify` → `/speckit-plan` → `/speckit-tasks` feature lifecycle.  
+`impeccable` powers the Designer agent's UX anti-pattern checks and QA design audit.
 
 ---
 
-## Step 4 — Connect your GitHub repo to Jira (optional)
+## Step 4 — Create project-specific docs
 
-For automatic branch-to-ticket linking:
+Create these files (the agents will reference them):
 
-1. In Jira, go to **Apps → GitHub for Jira** and install it
-2. Connect your GitHub organisation or repo
-3. Branches named `feat/[PROJECT_KEY]-123-description` will automatically
-   appear on the Jira ticket
+- **`docs/requirements.md`** — what you want to build (plain prose or bullet points)
+- **`docs/architecture.md`** — your tech stack, file layout, key patterns
+- **`docs/design-system.md`** — colour tokens, typography, spacing (or let the Designer create it)
 
 ---
 
-## Activating the Agents
+## Step 5 — Create GitHub Issue labels
 
-Open Claude Code in your project directory and use these prompts:
+The squad uses these labels. Create them in your repo:
 
-### Product Owner
-Breaks requirements into Epics and Stories and creates Jira tickets.
-
-```
-You are the Product Owner. Read docs/requirements.md and propose
-an Epic and Story breakdown.
-```
-
-### Developer
-Implements a single assigned Story on a feature branch.
-
-```
-You are the Developer. Implement [PROJECT_KEY]-XX: [story title].
-Here are the details: [paste story description and acceptance criteria]
+```bash
+gh label create "type:story"    --color "#0075ca" --description "A deliverable story"
+gh label create "type:bug"      --color "#d73a4a" --description "A bug raised during QA review"
+gh label create "status:backlog"     --color "#e4e669" --description "Available to pick up"
+gh label create "status:in-progress" --color "#f9a03f" --description "Claimed — in development"
+gh label create "status:in-review"   --color "#0052cc" --description "PR open — waiting for QA"
+gh label create "blocked"       --color "#b60205" --description "Has an unresolved blocker"
 ```
 
-### QA
-Reviews a PR and writes tests against the Story's acceptance criteria.
+---
+
+## Step 6 — Start the feature lifecycle
+
+Open Claude Code in your project and run:
 
 ```
-You are the QA Engineer. Review PR #[number] for [PROJECT_KEY]-XX: [story title].
-Acceptance criteria: [paste criteria]
+/speckit-specify
 ```
 
-### Delivery Lead
-Coordinates the full workflow end to end — just say:
+Describe the feature you want to build. Speckit will create a spec, plan, and tasks, then open GitHub Issues for the squad to pick up.
+
+Then activate the Delivery Lead:
 
 ```
 Pick up the next ticket.
 ```
 
-The Delivery Lead will find the next unblocked story in Jira, hand it
-to the Developer, hand the PR to QA, present you with a summary, and
-merge on your approval.
+The squad runs autonomously from here — Developer implements, QA reviews and merges, Delivery Lead coordinates.
 
 ---
 
-## Troubleshooting
+## Activating individual agents
 
-### Jira 401 Unauthorized
-Your API token or email is wrong. Re-run the connection test:
-```bash
-node scripts/test-jira-connection.mjs
+You can also invoke agents directly without the Delivery Lead:
+
+### Developer
 ```
-If it fails, update the credentials in `.env` and try again.
+You are the Developer agent. Follow .claude/agents/developer.md exactly.
+Implement issue #XX: [story title]. [Paste acceptance criteria and technical notes.]
+```
 
-### Jira 403 Forbidden
-Your token is valid but lacks permission. Make sure the Jira account
-has at least **Project Member** access to the project.
+### QA
+```
+You are the QA agent. Follow .claude/agents/qa.md exactly.
+Review PR #[number] for issue #XX: [story title]. [Paste acceptance criteria.]
+```
 
-### `gh: command not found`
-GitHub CLI is not on your PATH. Install it from [cli.github.com](https://cli.github.com)
-and run `gh auth login` before continuing.
-
-### Jira API endpoint returning 404
-You may be using the wrong base URL. It should be:
-`https://yoursite.atlassian.net` — no trailing slash, no `/jira` suffix.
-
-### `replaceAll` error during setup
-Make sure you are running Node.js v18 or later:
-```bash
-node --version
+### Designer (UI stories only)
+```
+You are the Designer agent. Follow .claude/agents/designer.md exactly.
+Design the UX for issue #XX: [story title]. [Paste UX Notes and acceptance criteria.]
 ```
